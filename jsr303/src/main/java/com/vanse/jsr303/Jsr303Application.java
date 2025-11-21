@@ -1,0 +1,13 @@
+package com.vanse.jsr303;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Jsr303Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Jsr303Application.class, args);
+    }
+
+}
