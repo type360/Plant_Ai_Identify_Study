@@ -2,15 +2,16 @@ server:
   port: 8888
 spring:
   profiles:
-    active: dev
-  jackson:
+    # spring.profiles.active=dev激活dev开发环境,然后再写一个开发环境的配置文件application-dev.yml
+    active: prod
+  jackson: # 解决json和数据库时间相差8小时问题
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
   servlet:
-    multipart:
-      max-file-size: 16MB
-      max-request-size: 16MB
-  datasource:
+    multipart: # 文件上传大小
+      max-file-size: 16MB #默认1m
+      max-request-size: 16MB # 默认10m
+  datasource: # 连接池配置
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     druid:
@@ -25,7 +26,7 @@ mybatis-plus:
   # 设置类型别名
   type-aliases-package: com.briup.pai.entity
   # mapper映射文件所在位置
-  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  mapper-locations: classpath*:mapper/**/*Mapper.xml #这里的第一个*表示在resource文件夹下
   global-config:
     db-config:
       # 逻辑删除字段

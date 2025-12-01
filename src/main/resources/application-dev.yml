@@ -2,8 +2,8 @@ spring:
   # 数据源配置
   datasource:
     url: jdbc:mysql://localhost:3306/pai
-    username: root
-    password: 123456
+    username: pai
+    password: pai
 # Knife4j 增强配置
 knife4j:
   enable: true

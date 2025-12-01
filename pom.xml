@@ -134,14 +134,14 @@
             <version>${knife4j.verison}</version>
         </dependency>
 
-        <!-- hutool工具包 -->
+        <!-- hutool工具包  加密 解压等功能-->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-core</artifactId>
             <version>${hutool.version}</version>
         </dependency>
 
-        <!-- mapstruct 对象转换依赖 -->
+        <!-- mapstruct 对象转换依赖 复制对象用的 BeanUtils-->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>

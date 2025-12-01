@@ -1,0 +1,6 @@
+spring:
+  # 数据源配置
+  datasource:
+    url: jdbc:mysql://localhost:3306/pai
+    username: pai
+    password: pai
