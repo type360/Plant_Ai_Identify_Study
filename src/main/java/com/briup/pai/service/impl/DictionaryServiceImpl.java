@@ -34,6 +34,7 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
         Integer dictId = dto.getDictId();
         Integer parentId = dto.getParentId();
         String dictCode = dto.getDictCode();
+        Dictionary dictionaryV = null;//新增和修改都要返回
         if (dictId == null) { //新增
             // dictCode不能重复
             /*LambdaQueryWrapper<Dictionary> qw = new LambdaQueryWrapper<Dictionary>();
@@ -53,14 +54,21 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
                     //只有一级分类才能添加二级分类
             List<Integer> parentIdList = getPrentIdList();
             BriupAssert.requireIn(parentId,parentIdList,ResultCodeEnum.PARAM_VERIFY_ERROR);
-            this.save(dictionaryConvert.dictionarySaveDTO2PO(dto));
+            dictionaryV = dictionaryConvert.dictionarySaveDTO2PO(dto);
+            this.save(dictionaryV);
 
-        }else {
+        }else {//修改
+            //id必须存在
+            Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictId, ResultCodeEnum.DATA_NOT_EXIST);
+            //数据字典key不能更改[前端传过来的和数据库已经存在的要一致]
+            BriupAssert.requireEqual(dictCode,dictionary.getDictCode(),ResultCodeEnum.PARAM_IS_ERROR);
+            dictionaryV = dictionaryConvert.dictionarySaveDTO2PO(dto);
+            this.updateById(dictionaryV);
 
         }
 
 
-        return null;
+        return dictionaryConvert.po2DictionaryEchoVO(dictionaryV);
     }
 
     @NotNull
@@ -72,9 +80,16 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
         return parentIdList;
     }
 
+    //dto  后端接收数据用的
+    // po
+    //vo  后端响应前端数据用的
     @Override
     public DictionaryEchoVO getDictionaryById(Integer dictionaryId) {
-        return null;
+        //根据id查询数字字典 如果查询不到，抛出异常
+        Dictionary byId = this.getById(dictionaryId);
+        Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
+
+        return dictionaryConvert.po2DictionaryEchoVO(dictionary);
     }
 
     @Override
