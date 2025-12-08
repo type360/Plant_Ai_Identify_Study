@@ -23,6 +23,7 @@ mybatis-plus:
   configuration:
     # 开启驼峰映射
     map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   # 设置类型别名
   type-aliases-package: com.briup.pai.entity
   # mapper映射文件所在位置

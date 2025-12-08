@@ -94,17 +94,35 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
 
     @Override
     public void removeDictionaryById(Integer dictionaryId) {
+        //id必须存在
+        BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
+        //先删除二级字典，再删除一级字典[逻辑删除]
+        // delete from dictionary where parentId = 0
+        this.remove(Wrappers.<Dictionary>lambdaQuery().eq(Dictionary::getParentId, dictionaryId));
+        // delete from dictionary where id = 0
+        this.removeById(dictionaryId);
 
     }
 
     @Override
     public PageVO<DictionaryPageVO> getDictionaryByPage(Long pageNum, Long pageSize) {
+        //先查询一级字典
+        this.list(Wrappers.<Dictionary>lambdaQuery().eq(Dictionary::getParentId, DictionaryConstant.PARENT_DICTIONARY_ID));
+        //每个一级字典 分别设置二级字典
         return null;
     }
 
+    /*
+    * 查询数据集类型下的二级字典的信息*/
     @Override
     public List<DropDownVO> getDropDownList(String dictCode) {
-        return List.of();
+        //根据【dictCode 一级字典编码】查询二级字典数据
+        Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getDictCode, dictCode, ResultCodeEnum.DATA_NOT_EXIST);
+        LambdaQueryWrapper<Dictionary> qw = Wrappers.<Dictionary>lambdaQuery();
+        qw.eq(Dictionary::getParentId, dictionary.getId());
+        List<Dictionary> second = this.list(qw);
+        // List<Dictionary> -> List<DropDownVO>
+        return dictionaryConvert.po2DictionaryDropDownVOList(second);
     }
 
     @Override
