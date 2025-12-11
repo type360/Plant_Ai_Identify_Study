@@ -3,6 +3,7 @@ package com.briup.pai.service.impl;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.briup.pai.common.constant.DictionaryConstant;
 import com.briup.pai.common.enums.ResultCodeEnum;
@@ -106,10 +107,33 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
 
     @Override
     public PageVO<DictionaryPageVO> getDictionaryByPage(Long pageNum, Long pageSize) {
+        PageVO<DictionaryPageVO> vo = new PageVO<>();
         //先查询一级字典
-        this.list(Wrappers.<Dictionary>lambdaQuery().eq(Dictionary::getParentId, DictionaryConstant.PARENT_DICTIONARY_ID));
+        Page<Dictionary> page = new Page<>(pageNum, pageSize);
+        page = this.page(page,Wrappers
+                .<Dictionary>query().lambda()
+                .eq(Dictionary::getParentId, DictionaryConstant.PARENT_DICTIONARY_ID)
+        );
+        List<DictionaryPageVO> list = dictionaryConvert.po2DictionaryPageVOList(page.getRecords())
+                .stream()
+                .peek(dictionaryPageVO -> {
+                    List<Dictionary> dictionaryList = this.list(Wrappers
+                            .<Dictionary>lambdaQuery()
+                            .eq(Dictionary::getParentId, dictionaryPageVO.getDictId()));
+                    List<DictionaryPageVO> children = dictionaryConvert.po2DictionaryPageVOList(dictionaryList);
+                    dictionaryPageVO.setChildren(children);
+                })//peek是一个中间态方法，不影响最后结果的生成，同时也因为这里要做二级分类的封装所以采用这个方法
+                .toList();
+
+
+        // 每个一级分类 分别设置二级字典 parentId = 1 4 7[id]
+        // select * from dictionary where parent = [1 4 7 21]
+
         //每个一级字典 分别设置二级字典
-        return null;
+        vo.setTotal(page.getTotal());
+        //此时只封装了一级分类
+        vo.setData(list);
+        return vo;
     }
 
     /*
