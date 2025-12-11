@@ -20,8 +20,11 @@ import com.briup.pai.entity.vo.PageVO;
 import com.briup.pai.service.IDictionaryService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.beans.Transient;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,15 +87,26 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
     //dto  后端接收数据用的
     // po
     //vo  后端响应前端数据用的
+    @Autowired
+    private RedisTemplate redisTemplate;
     @Override
     public DictionaryEchoVO getDictionaryById(Integer dictionaryId) {
-        //根据id查询数字字典 如果查询不到，抛出异常
-        Dictionary byId = this.getById(dictionaryId);
-        Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
+        //从缓存中查，如果有，获取；没有就从数据库中查询并放入缓存中
+        DictionaryEchoVO dictionaryEchoVO = (DictionaryEchoVO) redisTemplate.opsForValue().get(String.valueOf(dictionaryId));
+        if (dictionaryEchoVO == null){
+            //根据id查询数字字典 如果查询不到，抛出异常
+            Dictionary byId = this.getById(dictionaryId);
+            Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
 
-        return dictionaryConvert.po2DictionaryEchoVO(dictionary);
+            dictionaryEchoVO = dictionaryConvert.po2DictionaryEchoVO(dictionary);
+            //放入缓存中
+            redisTemplate.opsForValue().set(String.valueOf(dictionaryId), dictionaryEchoVO);
+        }
+
+        return dictionaryEchoVO;
     }
 
+    @Transactional(rollbackFor = Exception.class) //要删除redis的值和mysql的值，这里涉及到数据一致性策略，这里涉及到springcache
     @Override
     public void removeDictionaryById(Integer dictionaryId) {
         //id必须存在
@@ -107,6 +121,7 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
 
     @Override
     public PageVO<DictionaryPageVO> getDictionaryByPage(Long pageNum, Long pageSize) {
+        //应该先从redis中查询，查不到再从数据库中查询
         PageVO<DictionaryPageVO> vo = new PageVO<>();
         //先查询一级字典
         Page<Dictionary> page = new Page<>(pageNum, pageSize);
@@ -124,7 +139,7 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
                             .eq(Dictionary::getParentId, dictionaryPageVO.getDictId()));//这里是指获取
                     List<DictionaryPageVO> children = dictionaryConvert.po2DictionaryPageVOList(dictionaryList);
                     dictionaryPageVO.setChildren(children);
-                })//peek是一个中间态方法，不影响最后结果的生成，同时也因为这里要做二级分类的封装所以采用这个方法
+                })//peek是一个中间态方法，不影响最后结果的生成，同时也因为这里要做二级分类的封装所以采用这个方法。该方法的作用和.foreach()一样，但会提前结束调用链。
                 .toList();
         // 每个一级分类 分别设置二级字典 parentId = 1 4 7[id]
         // select * from dictionary where parent = [1 4 7 21]
