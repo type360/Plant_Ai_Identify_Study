@@ -20,6 +20,9 @@ import com.briup.pai.entity.vo.PageVO;
 import com.briup.pai.service.IDictionaryService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,8 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
     @Autowired
     DictionaryConvert dictionaryConvert;
 
+
+    @CachePut(key = "#result.dictId")
     @Override
     public DictionaryEchoVO addOrModifyDictionary(DictionarySaveDTO dto) {
         Integer dictId = dto.getDictId();
@@ -87,26 +92,18 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
     //dto  后端接收数据用的
     // po
     //vo  后端响应前端数据用的
-    @Autowired
-    private RedisTemplate redisTemplate;
+   /* @Autowired
+    private RedisTemplate redisTemplate;*/
+    @Cacheable(key = "#dictionaryId")
     @Override
     public DictionaryEchoVO getDictionaryById(Integer dictionaryId) {
-        //从缓存中查，如果有，获取；没有就从数据库中查询并放入缓存中
-        DictionaryEchoVO dictionaryEchoVO = (DictionaryEchoVO) redisTemplate.opsForValue().get(String.valueOf(dictionaryId));
-        if (dictionaryEchoVO == null){
-            //根据id查询数字字典 如果查询不到，抛出异常
-            Dictionary byId = this.getById(dictionaryId);
-            Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
-
-            dictionaryEchoVO = dictionaryConvert.po2DictionaryEchoVO(dictionary);
-            //放入缓存中
-            redisTemplate.opsForValue().set(String.valueOf(dictionaryId), dictionaryEchoVO);
-        }
-
+        Dictionary dictionary = BriupAssert.requireNotNull(this, Dictionary::getId, dictionaryId, ResultCodeEnum.DATA_NOT_EXIST);
+        DictionaryEchoVO dictionaryEchoVO = dictionaryConvert.po2DictionaryEchoVO(dictionary);
         return dictionaryEchoVO;
     }
 
     @Transactional(rollbackFor = Exception.class) //要删除redis的值和mysql的值，这里涉及到数据一致性策略，这里涉及到springcache
+    @CacheEvict(key = "#dictionaryId")//删除所有Dictionary开头的值
     @Override
     public void removeDictionaryById(Integer dictionaryId) {
         //id必须存在
@@ -152,6 +149,10 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
 
     /*
     * 查询数据集类型下的二级字典的信息*/
+//    Dictionary:Dropdown:#{dictCode}
+    @Cacheable(
+        key = "T(com.briup.pai.common.constant.CommonConstant).DROPDOWN_CACHE_PREFIX+':'+ #dictCode",
+        unless = "#result == null")
     @Override
     public List<DropDownVO> getDropDownList(String dictCode) {
         //根据【dictCode 一级字典编码】查询二级字典数据
