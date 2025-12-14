@@ -5,12 +5,14 @@ import com.briup.pai.common.enums.ResultCodeEnum;
 import com.briup.pai.common.enums.UserStatusEnum;
 import com.briup.pai.common.exception.BriupAssert;
 import com.briup.pai.common.utils.JwtUtil;
+import com.briup.pai.convert.UserConvert;
 import com.briup.pai.entity.dto.LoginWithPhoneDTO;
 import com.briup.pai.entity.dto.LoginWithUsernameDTO;
 import com.briup.pai.entity.po.User;
 import com.briup.pai.entity.vo.CurrentLoginUserVO;
 import com.briup.pai.service.ILoginService;
 import com.briup.pai.service.IUserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import java.util.Map;
 public class LoginServiceImpl implements ILoginService {
     @Autowired
     private IUserService userService;
+    @Autowired
+    private UserConvert userConvert;
 
     @Override
     public String loginWithUsername(LoginWithUsernameDTO dto) {
@@ -38,9 +42,13 @@ public class LoginServiceImpl implements ILoginService {
         return token;
     }
 
+    @Autowired
+    private HttpServletRequest request;
     @Override
     public CurrentLoginUserVO getCurrentUser() {
-        return null;
+        Integer userId = (Integer) request.getAttribute("userId");
+        User user = userService.getById(userId);
+        return userConvert.po2CurrentLoginUserVO(user);
     }
 
     @Override

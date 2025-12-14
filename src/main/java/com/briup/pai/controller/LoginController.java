@@ -28,6 +28,10 @@ public class LoginController {
         return Result.success(loginService.loginWithUsername(dto));
     }
 
+    //该方法没有参数，怎么知道当前用户是谁？
+    // 拦截器取出id 存到session|request
+    // 控制器/service取出session|request中的id
+    // 使用Threadlocal对象替换request,因为线程不安全
     @GetMapping("/getCurrentUser")
     @Operation(summary = "获取当前登录的用户信息")
     public Result getCurrentUser() {
