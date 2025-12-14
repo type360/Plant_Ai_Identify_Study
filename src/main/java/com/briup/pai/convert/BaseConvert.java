@@ -1,7 +1,9 @@
 package com.briup.pai.convert;
 
+import com.briup.pai.common.utils.SecurityUtil;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
+//这是一个工具类，叫什么都可以
 
 @Mapper
 public interface BaseConvert {
@@ -15,7 +17,7 @@ public interface BaseConvert {
 
     // 获取创建用户Id
     default Integer getCreateUserId() {
-        return 0;
+        return SecurityUtil.getUserId();
     }
 
     // 获取数据字典值

@@ -5,6 +5,7 @@ import com.briup.pai.common.enums.ResultCodeEnum;
 import com.briup.pai.common.enums.UserStatusEnum;
 import com.briup.pai.common.exception.BriupAssert;
 import com.briup.pai.common.utils.JwtUtil;
+import com.briup.pai.common.utils.SecurityUtil;
 import com.briup.pai.convert.UserConvert;
 import com.briup.pai.entity.dto.LoginWithPhoneDTO;
 import com.briup.pai.entity.dto.LoginWithUsernameDTO;
@@ -46,7 +47,8 @@ public class LoginServiceImpl implements ILoginService {
     private HttpServletRequest request;
     @Override
     public CurrentLoginUserVO getCurrentUser() {
-        Integer userId = (Integer) request.getAttribute("userId");
+//        Integer userId = (Integer) request.getAttribute("userId");
+        int userId = SecurityUtil.getUserId();
         User user = userService.getById(userId);
         return userConvert.po2CurrentLoginUserVO(user);
     }

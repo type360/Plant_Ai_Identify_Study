@@ -34,7 +34,9 @@ public class LoginInterceptor implements HandlerInterceptor {
         );
         // 获取用户ID[如果查询当前用户需要此id的话]
         Integer userId = JwtUtil.getUserId(token);
-        request.setAttribute("userId", userId);
+        //request request.getSession()
+//        request.setAttribute("userId", userId);
+        SecurityUtil.setUserId(userId);
 
         // 放行
         return true;
