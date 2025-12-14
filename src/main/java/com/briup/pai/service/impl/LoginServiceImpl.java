@@ -1,10 +1,12 @@
 package com.briup.pai.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.briup.pai.common.constant.LoginConstant;
 import com.briup.pai.common.enums.ResultCodeEnum;
 import com.briup.pai.common.enums.UserStatusEnum;
 import com.briup.pai.common.exception.BriupAssert;
 import com.briup.pai.common.utils.JwtUtil;
+import com.briup.pai.common.utils.RedisUtil;
 import com.briup.pai.common.utils.SecurityUtil;
 import com.briup.pai.convert.UserConvert;
 import com.briup.pai.entity.dto.LoginWithPhoneDTO;
@@ -53,13 +55,40 @@ public class LoginServiceImpl implements ILoginService {
         return userConvert.po2CurrentLoginUserVO(user);
     }
 
+    @Autowired
+    private RedisUtil redisUtil;
     @Override
     public void sendMessageCode(String telephone) {
+        //此处应该使用阿里云短信工具发送验证码
+        //VerifyCode19951154250:7377这是验证码键值对样例
+        String key = LoginConstant.USER_SMS_VERIFY_CODE_PREFIX + telephone;
+        //手机号必须存在
+        User user = BriupAssert.requireNotNull(userService, User::getTelephone, telephone, ResultCodeEnum.USER_NOT_EXIST);
+        //用户不能禁用
+        BriupAssert.requireEqual(user.getStatus(), UserStatusEnum.AVAILABLE,ResultCodeEnum.USER_IS_DISABLED);
+        //该手机号只能有一个验证码
+        BriupAssert.requireFalse(redisUtil.existKey(key),ResultCodeEnum.USER_VERIFY_CODE_ALREADY_EXIST);
+        //将验证码存到Redis中去，并制定存活时间
+        int value = RandomUtil.randomInt(1000, 9999);
+
+        redisUtil.set(key,value,LoginConstant.USER_SMS_VERIFY_CODE_EXPIRATION_TIME);
 
     }
 
     @Override
     public String loginWithTelephone(LoginWithPhoneDTO dto) {
-        return "";
+        String telephone = dto.getTelephone();
+        Integer code = dto.getCode();
+        //根据手机号查用户
+        User user = BriupAssert.requireNotNull(userService, User::getTelephone, telephone, ResultCodeEnum.USER_NOT_EXIST);
+        //用户输入的验证码和Redis中的验证码比对
+        Integer redisCode = (Integer)redisUtil.get(LoginConstant.USER_SMS_VERIFY_CODE_PREFIX + telephone);
+        BriupAssert.requireEqual(redisCode,code,ResultCodeEnum.USER_IS_DISABLED);
+        //把验证码删除
+        redisUtil.delete(LoginConstant.USER_SMS_VERIFY_CODE_PREFIX + telephone);
+        Map<String, Object> map = new HashMap<>();
+        map.put(LoginConstant.JWT_PAYLOAD_KEY, user.getId());
+        String token = JwtUtil.generateJwt(map);
+        return token;
     }
 }
