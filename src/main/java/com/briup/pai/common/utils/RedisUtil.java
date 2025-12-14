@@ -1,0 +1,42 @@
+package com.briup.pai.common.utils;
+
+import jakarta.annotation.Resource;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
+
+import java.util.concurrent.TimeUnit;
+
+/**
+ * @author 86151
+ * @program: Plant_Ai_Identify_Study
+ * @description
+ * @create 2025/12/14 15:21
+ **/
+
+@Component
+public class RedisUtil {
+
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate;
+
+    /* key相关操作 */
+    //短信验证码不能重复
+    public Boolean existKey(String key) {
+        return redisTemplate.hasKey(key);
+    }
+
+    public void delete(String key) {
+        redisTemplate.delete(key);
+    }
+
+    /* string类型相关操作 */
+    // 设置string类型的值，带过期时间，单位：秒
+    public void set(String key, Object value, int expireTime) {
+        redisTemplate.opsForValue().set(key, value, expireTime, TimeUnit.SECONDS);
+    }
+
+    // 获取string类型的值
+    public Object get(String key) {
+        return redisTemplate.opsForValue().get(key);
+    }
+}
