@@ -1,27 +1,30 @@
+server:
+  port: 8889
 spring:
   # 数据源配置
   datasource:
     url: jdbc:mysql://localhost:3306/pai
     username: pai
     password: pai
-  spring:
-    data:
-      redis:
-        # 操作的是0号数据库(共16个，默认0), 切换命令：select 0-15
-        database: 0
-        host: localhost
-        port: 6379
-        # 此处可以选则jedis或者lettuce
-        lettuce:
-          pool:
-            # 最小空闲连接数
-            min-idle: 10
-            # 最大空闲连接数
-            max-idle: 20
-            # 最大活跃连接数
-            max-active: 20
-            # 最大等待时间
-            max-wait: 2000
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # Redis配置
+  data:
+    redis:
+      # 操作的是0号数据库(共16个，默认0), 切换命令：select 0-15
+      database: 0
+      host: localhost
+      port: 6379
+      # 此处可以选则jedis或者lettuce
+      lettuce:
+        pool:
+          # 最小空闲连接数
+          min-idle: 10
+          # 最大空闲连接数
+          max-idle: 20
+          # 最大活跃连接数
+          max-active: 20
+          # 最大等待时间
+          max-wait: 2000
 
 
 # Knife4j 增强配置

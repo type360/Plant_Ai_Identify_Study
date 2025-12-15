@@ -3,7 +3,7 @@ server:
 spring:
   profiles:
     # spring.profiles.active=dev激活dev开发环境,然后再写一个开发环境的配置文件application-dev.yml
-    active: prod
+    active: dev
   jackson: # 解决json和数据库时间相差8小时问题
     time-zone: GMT+8
     date-format: yyyy-MM-dd HH:mm:ss
@@ -34,3 +34,6 @@ mybatis-plus:
       logic-delete-field: isDeleted
       logic-not-delete-value: 0
       logic-delete-value: 1
+  logging:
+    level:
+      com.briup.pai.dao:debug

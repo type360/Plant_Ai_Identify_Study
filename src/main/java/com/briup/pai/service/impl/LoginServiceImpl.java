@@ -13,8 +13,10 @@ import com.briup.pai.entity.dto.LoginWithPhoneDTO;
 import com.briup.pai.entity.dto.LoginWithUsernameDTO;
 import com.briup.pai.entity.po.User;
 import com.briup.pai.entity.vo.CurrentLoginUserVO;
+import com.briup.pai.service.IAuthService;
 import com.briup.pai.service.ILoginService;
 import com.briup.pai.service.IUserService;
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,10 +29,13 @@ import java.util.Map;
 public class LoginServiceImpl implements ILoginService {
     @Autowired
     private IUserService userService;
+    @Resource
+    private IAuthService authService;
     @Autowired
     private UserConvert userConvert;
 
     @Override
+    @Transactional
     public String loginWithUsername(LoginWithUsernameDTO dto) {
         //这里要使用LoginServiceImpl->UserServiceImpl->UserMapper->User
         //对比用户名称判断用户名称是否存在
@@ -38,7 +43,7 @@ public class LoginServiceImpl implements ILoginService {
         //对比密码判断密码是否正确
         BriupAssert.requireEqual(DigestUtils.md5Hex(dto.getPassword()),user.getPassword(),ResultCodeEnum.PASSWORD_IS_WRONG);
         //对比用户状态吗，判断用户状态
-        BriupAssert.requireEqual(user.getStatus(), UserStatusEnum.AVAILABLE,ResultCodeEnum.USER_IS_DISABLED);
+        BriupAssert.requireEqual(user.getStatus(), UserStatusEnum.AVAILABLE.getStatus(),ResultCodeEnum.USER_IS_DISABLED);
         Map<String, Object> map = new HashMap<>();
         map.put(LoginConstant.JWT_PAYLOAD_KEY, user.getId());
         String token = JwtUtil.generateJwt(map);
@@ -52,6 +57,11 @@ public class LoginServiceImpl implements ILoginService {
 //        Integer userId = (Integer) request.getAttribute("userId");
         int userId = SecurityUtil.getUserId();
         User user = userService.getById(userId);
+        // 转换对象
+        CurrentLoginUserVO currentLoginUserVO = userConvert.po2CurrentLoginUserVO(user);
+        // 封装菜单和按钮权限
+        currentLoginUserVO.setMenu(authService.getRouter(userId));
+        currentLoginUserVO.setButtons(authService.getUserButtonPermissionList(userId));
         return userConvert.po2CurrentLoginUserVO(user);
     }
 
@@ -65,7 +75,7 @@ public class LoginServiceImpl implements ILoginService {
         //手机号必须存在
         User user = BriupAssert.requireNotNull(userService, User::getTelephone, telephone, ResultCodeEnum.USER_NOT_EXIST);
         //用户不能禁用
-        BriupAssert.requireEqual(user.getStatus(), UserStatusEnum.AVAILABLE,ResultCodeEnum.USER_IS_DISABLED);
+        BriupAssert.requireEqual(user.getStatus(), UserStatusEnum.AVAILABLE.getStatus(),ResultCodeEnum.USER_IS_DISABLED);
         //该手机号只能有一个验证码
         BriupAssert.requireFalse(redisUtil.existKey(key),ResultCodeEnum.USER_VERIFY_CODE_ALREADY_EXIST);
         //将验证码存到Redis中去，并制定存活时间
@@ -83,7 +93,7 @@ public class LoginServiceImpl implements ILoginService {
         User user = BriupAssert.requireNotNull(userService, User::getTelephone, telephone, ResultCodeEnum.USER_NOT_EXIST);
         //用户输入的验证码和Redis中的验证码比对
         Integer redisCode = (Integer)redisUtil.get(LoginConstant.USER_SMS_VERIFY_CODE_PREFIX + telephone);
-        BriupAssert.requireEqual(redisCode,code,ResultCodeEnum.USER_IS_DISABLED);
+        BriupAssert.requireEqual(redisCode,code,ResultCodeEnum.USER_VERIFY_CODE_ERROR);
         //把验证码删除
         redisUtil.delete(LoginConstant.USER_SMS_VERIFY_CODE_PREFIX + telephone);
         Map<String, Object> map = new HashMap<>();

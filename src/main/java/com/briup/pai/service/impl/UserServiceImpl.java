@@ -16,7 +16,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public String getUsernameById(Integer userId) {
-        return "";
+        return this.getById(userId).getUsername();
     }
 
     @Override

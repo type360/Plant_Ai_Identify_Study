@@ -8,9 +8,12 @@ import com.briup.pai.service.ILoginService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
+import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/login")
@@ -86,4 +89,8 @@ public class LoginController {
     public Result logout() {
         return Result.success();
     }
+
+    //response 导出excle需要将文件作为附件写到浏览器下载
+    //MultipartFile 头像文件上传excle
+    public void test(HttpServletRequest request, MultipartFile mf) {}
 }

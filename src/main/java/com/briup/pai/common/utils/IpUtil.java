@@ -6,6 +6,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 // Ip解析的工具类
+//要用代理地址还原成真实地址
+//域名还原地址
+//是127.0.0.1->127.0.0.1  还有ipv6写法 0:0:0:0:0:0:0:1
 public class IpUtil {
 
     public static String getIpAddress(HttpServletRequest request) {
