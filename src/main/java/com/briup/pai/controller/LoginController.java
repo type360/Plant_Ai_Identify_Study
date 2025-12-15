@@ -92,5 +92,5 @@ public class LoginController {
 
     //response 导出excle需要将文件作为附件写到浏览器下载
     //MultipartFile 头像文件上传excle
-    public void test(HttpServletRequest request, MultipartFile mf) {}
+//    public void test(HttpServletRequest request, MultipartFile mf) {}
 }

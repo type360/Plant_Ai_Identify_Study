@@ -13,7 +13,6 @@ import com.briup.pai.entity.dto.LoginWithPhoneDTO;
 import com.briup.pai.entity.dto.LoginWithUsernameDTO;
 import com.briup.pai.entity.po.User;
 import com.briup.pai.entity.vo.CurrentLoginUserVO;
-import com.briup.pai.service.IAuthService;
 import com.briup.pai.service.ILoginService;
 import com.briup.pai.service.IUserService;
 import jakarta.annotation.Resource;
