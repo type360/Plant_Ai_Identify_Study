@@ -29,13 +29,8 @@ import java.util.Map;
 public class LoginServiceImpl implements ILoginService {
     @Autowired
     private IUserService userService;
-    @Resource
-    private IAuthService authService;
-    @Autowired
-    private UserConvert userConvert;
 
     @Override
-    @Transactional
     public String loginWithUsername(LoginWithUsernameDTO dto) {
         //这里要使用LoginServiceImpl->UserServiceImpl->UserMapper->User
         //对比用户名称判断用户名称是否存在
@@ -50,18 +45,15 @@ public class LoginServiceImpl implements ILoginService {
         return token;
     }
 
+//    @Autowired
+//    private HttpServletRequest request;
     @Autowired
-    private HttpServletRequest request;
+    private UserConvert userConvert;
     @Override
     public CurrentLoginUserVO getCurrentUser() {
 //        Integer userId = (Integer) request.getAttribute("userId");
         int userId = SecurityUtil.getUserId();
         User user = userService.getById(userId);
-        // 转换对象
-        CurrentLoginUserVO currentLoginUserVO = userConvert.po2CurrentLoginUserVO(user);
-        // 封装菜单和按钮权限
-        currentLoginUserVO.setMenu(authService.getRouter(userId));
-        currentLoginUserVO.setButtons(authService.getUserButtonPermissionList(userId));
         return userConvert.po2CurrentLoginUserVO(user);
     }
 

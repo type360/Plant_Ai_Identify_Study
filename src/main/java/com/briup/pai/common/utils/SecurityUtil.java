@@ -20,9 +20,7 @@ public class SecurityUtil {
 
     //1.preHandle拦截器取出token里的id,存到Threadlocal里
     public static void setUserId(Integer userId) {
-        if (threadLocal.get() == null) {
-            threadLocal.set(userId);
-        }
+        threadLocal.set(userId);
     }
 
     //销毁Threadlocal中的值 用完就删掉
