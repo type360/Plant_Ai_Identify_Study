@@ -3,8 +3,7 @@ package com.briup.pai.convert;
 import com.briup.pai.common.utils.SecurityUtil;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-//这是一个工具类，叫什么都可以
-
+// 工具类
 @Mapper
 public interface BaseConvert {
 

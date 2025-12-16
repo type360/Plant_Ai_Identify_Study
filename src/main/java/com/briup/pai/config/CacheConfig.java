@@ -13,12 +13,6 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
 
-/**
- * @author 86151
- * @program: Plant_Ai_Identify_Study
- * @description
- * @create 2025/12/13 12:40
- **/
 @Configuration
 @EnableCaching // 开启缓存
 public class CacheConfig {
@@ -44,4 +38,3 @@ public class CacheConfig {
                 .build();
     }
 }
-

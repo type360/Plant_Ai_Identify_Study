@@ -6,12 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * @author 86151
- * @program: Plant_Ai_Identify_Study
- * @description
- * @create 2025/12/13 17:33
- **/
 @Configuration
 public class MVCConfig implements WebMvcConfigurer {
 

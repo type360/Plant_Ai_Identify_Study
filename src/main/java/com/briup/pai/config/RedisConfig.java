@@ -11,13 +11,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-/**
- * @author 86151
- * @program: Plant_Ai_Identify_Study
- * @description
- * @create 2025/12/11 10:21
- **/
-@Configuration
+// 将对象存到redis中 用jackson序列化
+@Configuration //默认使用jdk的对象序列化方式
 public class RedisConfig {
 
     @Bean

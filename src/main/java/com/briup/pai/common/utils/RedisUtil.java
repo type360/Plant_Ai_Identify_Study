@@ -6,13 +6,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author 86151
- * @program: Plant_Ai_Identify_Study
- * @description
- * @create 2025/12/14 15:21
- **/
-
 @Component
 public class RedisUtil {
 
@@ -20,7 +13,7 @@ public class RedisUtil {
     private RedisTemplate<String, Object> redisTemplate;
 
     /* key相关操作 */
-    //短信验证码不能重复
+    // 短信验证码不能重复
     public Boolean existKey(String key) {
         return redisTemplate.hasKey(key);
     }

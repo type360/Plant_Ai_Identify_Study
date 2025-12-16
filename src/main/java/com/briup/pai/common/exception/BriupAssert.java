@@ -132,6 +132,7 @@ public class BriupAssert {
         LambdaQueryWrapper<T> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(function, value);
         T t = service.getOne(wrapper);
+        // t的id != 参数传递的id时候 没有修改名字
         if (t != null && !functionId.apply(t).equals(IdField)) {
             throw new CustomException(resultCodeEnum);
         }

@@ -1,30 +1,27 @@
 package com.briup.pai.common.utils;
 
 /**
- * @author 86151
- * @program: Plant_Ai_Identify_Study
- * @description:Threadlocal工具类 每个线程都会有自己的变量。这个工具类要自己写
- * @create 2025/12/13 17:21
- * 请求顺序是 拦截器preHandle [控制器 service dao] 拦截器postHandle 之后有个渲染视图用的afterCompletion但这里用不到
- * 先在prehandle存储用户id,接着控制器和service层取
- *
- **/
+ * @Auther: vanse(lc)
+ * @Date: 2025/11/6-11-06-下午2:19
+ * @Description：ThreadLocal工具类 每个线程独有的变量
+ *   拦截器preHandler  [控制器 service dao]    拦截器postHandler
+ *   -- 渲染视图 afterCompletion
+ */
 public class SecurityUtil {
+    private static ThreadLocal<Integer> threadLocal = new ThreadLocal<Integer>();
 
-    private static final ThreadLocal<Integer> threadLocal = new ThreadLocal<>();
-
-    //2.service取出threadlocal里的值
-    public static Integer getUserId() {
-        return threadLocal.get();
-    }
-
-    //1.preHandle拦截器取出token里的id,存到Threadlocal里
-    public static void setUserId(Integer userId) {
+    // 1.拦截器preHandler  取出token里的id,存到ThreadLocal里
+    public static void setUserId(Integer userId){
         threadLocal.set(userId);
     }
 
-    //销毁Threadlocal中的值 用完就删掉
-    public static void removeUserId() {
+    // 2.service取出threadLocal里的值
+    public static Integer getUserId(){
+        return threadLocal.get();
+    }
+
+    // 3.销毁threalocal中的值 用完就删掉
+    public static void removeUserId(){
         threadLocal.remove();
     }
 }

@@ -17,8 +17,9 @@ public class DictionaryController {
 
     @Resource
     private IDictionaryService dictionaryService;
-
+    // 新增
     @PostMapping
+    // swagger @Opertation("新增数据字典")
     @Operation(summary = "新增数据字典")
     public Result addDictionary(
             @RequestBody

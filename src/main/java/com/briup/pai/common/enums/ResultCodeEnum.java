@@ -49,8 +49,10 @@ public enum ResultCodeEnum {
     DATASET_STATUS_ERROR(40001, "数据集状态错误，刷新页面重试"),
     MODEL_CAN_NOT_EVALUATE(40002, "该数据集已经评估过该版本"),
     MODEL_CAN_NOT_RELEASE(40003, "模型准确率低于阈值，无法删除"),
-    DISABLE_OR_ENABLE_ERROR(40004, "无法禁用自己的账号");
+    DISABLE_OR_ENABLE_ERROR(40004, "无法禁用自己的账号"),
+    ASSIGN_ROLE_ERROR(40005, "无法为自己的账号授权"),
 
+    ;
     private final Integer code;
     private final String message;
 }
