@@ -1,0 +1,42 @@
+server:
+  port: 8888
+spring:
+  profiles:
+    # spring.profiles.active=dev激活dev开发环境
+      # application-dev application-prod
+    active: prod
+  jackson: # 解决json和数据库时间相差8小时问题
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  servlet:
+    multipart: # 文件上传大小
+      max-file-size: 16MB # 默认1m
+      max-request-size: 16MB # 默认10mb
+  datasource: # 连接池配置
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      min-idle: 5      # 最小连接数
+      max-active: 20   # 最大连接数
+      initial-size: 5  # 初始化连接数
+      max-wait: 60000  # 最大等待时间
+mybatis-plus:
+  configuration:
+    # 开启驼峰映射
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  # 设置类型别名
+  type-aliases-package: com.briup.pai.entity
+  # mapper映射文件所在位置
+  mapper-locations: classpath*:mapper/**/*Mapper.xml
+  global-config:
+    db-config:
+      # 逻辑删除字段
+      logic-delete-field: isDeleted
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+
+logging:
+  level:
+    com.briup.pai.dao: debug
