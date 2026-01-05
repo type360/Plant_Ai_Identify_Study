@@ -1,6 +1,8 @@
 package com.briup.pai.convert;
 
 import com.briup.pai.common.utils.SecurityUtil;
+import com.briup.pai.common.utils.SpringContextUtil;
+import com.briup.pai.service.IDictionaryService;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 // 工具类
@@ -21,6 +23,7 @@ public interface BaseConvert {
 
     // 获取数据字典值
     default String getDictionaryValue(Integer dictionaryId) {
-        return "";
+        return SpringContextUtil.getBean(IDictionaryService.class)
+                .getDictionaryValueById(dictionaryId);
     }
 }

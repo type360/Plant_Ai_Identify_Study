@@ -22,6 +22,7 @@ public interface DatasetConvert {
 
     // Dataset -> DatasetPageVO
     @Mapping(target = "datasetId", source = "id")
+    // TODO 注意数据类型要去查询数据字典 如何在一个接口里面获取到另外一个全类名信息 一个·接口里不能再调用另一个service,解决方案就是动态获取Bean
     @Mapping(target = "datasetType", expression = "java(BaseConvert.INSTANCE.getDictionaryValue(dataset.getDatasetType()))")
     @Mapping(target = "datasetStatus", qualifiedByName = "getDatasetStatus")
     @Mapping(target = "datasetUsage", qualifiedByName = "getDatasetUsage")

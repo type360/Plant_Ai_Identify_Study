@@ -152,6 +152,6 @@ public class DictionaryServiceImpl extends ServiceImpl<DictionaryMapper, Diction
 
     @Override
     public String getDictionaryValueById(Integer dictionaryId) {
-        return "";
+        return getDictionaryById(dictionaryId).getDictValue();
     }
 }
