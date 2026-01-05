@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.briup.pai.common.constant.OperatorConstant;
+import com.briup.pai.common.enums.OperatorCategoryEnum;
 import com.briup.pai.common.enums.ResultCodeEnum;
 import com.briup.pai.common.exception.BriupAssert;
 import com.briup.pai.common.exception.CustomException;
@@ -20,20 +22,24 @@ import com.briup.pai.entity.vo.OperatorPageVO;
 import com.briup.pai.entity.vo.PageVO;
 import com.briup.pai.service.IOperatorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@CacheConfig(cacheNames = OperatorConstant.OPERATOR_CACHE_PREFIX)
 @Service
 public class OperatorServiceImpl extends ServiceImpl<OperatorMapper, Operator> implements IOperatorService {
     @Autowired
     private OperatorConvert operatorConvert;
 
+    @Cacheable(key = "T(com.briup.pai.common.constant.CommonConstant).DROPDOWN_CACHE_PREFIX")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void importOperator(MultipartFile file) {
@@ -83,12 +89,15 @@ public class OperatorServiceImpl extends ServiceImpl<OperatorMapper, Operator> i
         return pageVO;
     }
 
+    @Cacheable(key = "#operatorId")
     @Override
     public OperatorEchoVO getOperatorById(Integer operatorId) {
         Operator operator = BriupAssert.requireNotNull(this, Operator::getId, operatorId, ResultCodeEnum.DATA_NOT_EXIST);
         return operatorConvert.po2OperatorEchoVO(operator);
     }
 
+    @CachePut(key = "result.operatorId")
+    @CacheEvict(key = "T(com.briup.pai.common.constant.CommonConstant).DROPDOWN_CACHE_PREFIX")
     @Override
     public OperatorEchoVO modifyOperatorById(OperatorUpdateDTO dto) {
         // 算子存在
@@ -119,18 +128,37 @@ public class OperatorServiceImpl extends ServiceImpl<OperatorMapper, Operator> i
         return  operatorConvert.po2OperatorEchoVO(operatorConvert.operatorUpdateDTO2po(dto));
     }
 
+    @Caching(evict = {
+            @CacheEvict(key = "#operatorId"),
+            @CacheEvict(key = "T(com.briup.pai.common.constant.CommonConstant).DROPDOWN_CACHE_PREFIX")
+    })
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void removeOperatorById(Integer operatorId) {
+        //这里是逻辑删除，在数据库中改为1
+        BriupAssert.requireNotNull(this, Operator::getId, operatorId, ResultCodeEnum.DATA_NOT_EXIST);
+        this.removeById(operatorId);
 
     }
 
+    @CacheEvict(allEntries = true)//删除算子所有缓存
     @Override
     public void removeOperatorByIds(List<Integer> ids) {
+        //逻辑删除
+        this.removeBatchByIds(ids);
 
     }
 
+    @Cacheable(key = "T(com.briup.pai.common.constant.CommonConstant).DROPDOWN_CACHE_PREFIX")
     @Override
     public Map<Integer, List<DropDownVO>> getOperatorDropDownList() {
-        return Map.of();
+        Map<Integer,List<DropDownVO>> map = new HashMap<>();
+        OperatorCategoryEnum.categoryList()
+                .stream()
+                .forEach(categoryId -> {
+                    List<Operator> list = this.list(Wrappers.<Operator>lambdaQuery().eq(Operator::getOperatorCategory, categoryId));
+                    map.put(categoryId,operatorConvert.po2DropDownList(list));
+                });
+        return map;
     }
 }
