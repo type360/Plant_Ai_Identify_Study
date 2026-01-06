@@ -6,6 +6,9 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.briup.pai.common.enums.DatasetStatusEnum;
+import com.briup.pai.common.enums.ResultCodeEnum;
+import com.briup.pai.common.exception.BriupAssert;
 import com.briup.pai.convert.DatasetConvert;
 import com.briup.pai.dao.DatasetMapper;
 import com.briup.pai.entity.dto.DatasetSaveDTO;
@@ -55,12 +58,64 @@ public class DatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset> impl
 
     @Override
     public DatasetEchoVO addOrModifyDataset(DatasetSaveDTO dto) {
-        return null;
+        Integer datasetId = dto.getDatasetId();
+        Dataset dataset = null;
+        if (ObjectUtil.isNull(datasetId)) {
+            // 数据集名称必须唯一
+            BriupAssert.requireNull(
+                    this,
+                    Dataset::getDatasetName,
+                    dto.getDatasetName(),
+                    ResultCodeEnum.DATA_ALREADY_EXIST
+            );
+            // 转换成po对象
+            dataset = datasetConvert.datasetSaveDTO2Po(dto);
+            // 数据集状态设置为初始化
+            dataset.setDatasetStatus(DatasetStatusEnum.INIT.getStatus());
+            // 保存
+            this.save(dataset);
+        } else {
+            // 数据集必须存在
+            Dataset temp = BriupAssert.requireNotNull(
+                    this,
+                    Dataset::getId,
+                    datasetId,
+                    ResultCodeEnum.DATA_NOT_EXIST
+            );
+            // 数据集名称必须唯一
+            BriupAssert.requireNull(
+                    this,
+                    Dataset::getDatasetName,
+                    dto.getDatasetName(),
+                    Dataset::getId,
+                    datasetId,
+                    ResultCodeEnum.DATA_ALREADY_EXIST
+            );
+            // 数据集类型不能修改
+            BriupAssert.requireEqual(
+                    dto.getDatasetType(),
+                    temp.getDatasetType(),
+                    ResultCodeEnum.PARAM_IS_ERROR
+            );
+            // 修改
+            dataset = datasetConvert.datasetSaveDTO2Po(dto);
+            this.updateById(dataset);
+        }
+        return datasetConvert.po2DatasetEchoVO(dataset);
     }
 
+    //回显数据集
     @Override
     public DatasetEchoVO modifyDatasetFeedback(Integer datasetId) {
-        return null;
+        // 数据集必须存在
+        Dataset dataset = BriupAssert.requireNotNull(
+                this,
+                Dataset::getId,
+                datasetId,
+                ResultCodeEnum.DATA_NOT_EXIST
+        );
+        // 转换VO返回
+        return datasetConvert.po2DatasetEchoVO(dataset);
     }
 
     @Override
@@ -70,6 +125,17 @@ public class DatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset> impl
 
     @Override
     public DatasetDetailVO getDatasetDetail(Integer datasetId) {
-        return null;
+        Dataset dataset = BriupAssert.requireNotNull(this, Dataset::getId, datasetId, ResultCodeEnum.DATA_NOT_EXIST);
+        DatasetDetailVO datasetDetailVO = datasetConvert.po2DatasetDetailVO(dataset);
+        List<ClassifyInDatasetVO> classifies = classifyService.getClassifiesByDatasetId(datasetId);
+        datasetDetailVO.setClassifies(classifies);
+        datasetDetailVO.setClassifyNum((long) classifies.size());
+
+        int total = 0;
+        for (ClassifyInDatasetVO classify : classifies) {
+            total += classify.getEntityNum();
+        }
+        datasetDetailVO.setEntityNum((long) total);
+        return datasetDetailVO;
     }
 }
