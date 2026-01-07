@@ -1,5 +1,6 @@
 package com.briup.pai.service.impl;
 
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -16,18 +17,24 @@ import com.briup.pai.entity.po.Dataset;
 import com.briup.pai.entity.vo.*;
 import com.briup.pai.service.IClassifyService;
 import com.briup.pai.service.IDatasetService;
+import com.briup.pai.service.IEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
 public class DatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset> implements IDatasetService {
-
+    @Value("${upload.nginx-file-path}")
+    private String nginxFilePath;
     @Autowired
     private DatasetConvert datasetConvert;
     @Autowired
     private IClassifyService classifyService;
+    @Autowired
+    private IEntityService entityService;
     @Override
     public PageVO<DatasetPageVO> getDatasetByPageAndCondition(Long pageNum, Long pageSize, String datasetName, Integer datasetType) {
         Page<Dataset> page = new Page<>(pageNum, pageSize);
@@ -120,7 +127,24 @@ public class DatasetServiceImpl extends ServiceImpl<DatasetMapper, Dataset> impl
 
     @Override
     public void removeDatasetById(Integer datasetId) {
+        // todo 正在使用[训练 评估 优化]的数据集不能删除 学了模型之后再来处理
+        //删除数据集分类以及分类下的图片
+        BriupAssert.requireNotNull(this, Dataset::getId, datasetId, ResultCodeEnum.DATA_NOT_EXIST);
+        List<ClassifyInDatasetVO> classifies = classifyService.getClassifiesByDatasetId(datasetId);
+        int[] classifyIds = classifies.stream().mapToInt(ClassifyInDatasetVO::getClassifyId).toArray();
+        System.out.println(Arrays.toString(classifyIds));
+        for (int classifyId : classifyIds) {
+            List<EntityInClassifyVO> entityInClassifyVOS = entityService.getEntityByClassifyId(classifyId);
+            int[] entityIds = entityInClassifyVOS.stream().mapToInt(EntityInClassifyVO::getEntityId).toArray();
+            entityService.removeBatchByIds(Arrays.asList(entityIds));
 
+        }
+        //删除分类
+        classifyService.removeBatchByIds(Arrays.asList(classifyIds));
+        //删除数据集
+        this.removeById(datasetId);
+        //删除数据集文件 E:/pai-file-nginx/html/1
+        FileUtil.del(nginxFilePath+"/"+datasetId);
     }
 
     @Override
