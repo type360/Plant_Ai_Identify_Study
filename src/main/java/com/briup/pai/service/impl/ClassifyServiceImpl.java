@@ -19,6 +19,7 @@ import com.briup.pai.service.IClassifyService;
 import com.briup.pai.service.IEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class ClassifyServiceImpl extends ServiceImpl<ClassifyMapper, Classify> i
     private String nginxFilePath;
     @Autowired
     private ClassifyConvert classifyConvert;
+    @Lazy
     @Autowired
     private IEntityService entityService;
 
@@ -98,12 +100,19 @@ public class ClassifyServiceImpl extends ServiceImpl<ClassifyMapper, Classify> i
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void removeClassifyById(Integer datasetId, Integer classifyId) {
+        LambdaQueryWrapper<Classify> wrapper = Wrappers.<Classify>lambdaQuery()
+                .eq(Classify::getDatasetId, datasetId)
+                .eq(Classify::getId, classifyId);
+        Classify classify = (Classify) BriupAssert.requireNotNull(this.getOne(wrapper), ResultCodeEnum.DATA_NOT_EXIST);
         // 删除分类下图片
         List<EntityInClassifyVO> entityInClassifyVOS = entityService.getEntityByClassifyId(classifyId);
-        int[] entityIds = entityInClassifyVOS.stream().mapToInt(EntityInClassifyVO::getEntityId).toArray();
-        entityService.removeBatchByIds(Arrays.asList(entityIds));
+//        int[] entityIds = entityInClassifyVOS.stream().mapToInt(EntityInClassifyVO::getEntityId).toArray();
+        List<Integer> ids = entityInClassifyVOS.stream().map(EntityInClassifyVO::getEntityId).toList();
+        entityService.removeBatchByIds(ids);
         // 删除分类
-        // 删除磁盘上的分类文件夹
+        this.removeById(classifyId);
+        // 删除磁盘上的分类文件夹 E:/pai-file-nginx/html/1/bbb
+        FileUtil.del(nginxFilePath + "/" + datasetId + "/" + classify.getClassifyName());
 
 
     }
