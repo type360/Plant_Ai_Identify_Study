@@ -37,7 +37,7 @@ knife4j:
 # 自定义上传配置
 upload:
   nginx-file-path: E:/nginx/pai-file-nginx/html # 图片真实存在目录
-  nginx-server: http://localhost:89 # nginx的访问前缀
+  nginx-server: http://localhost:89 # nginx的访问前缀 nginx图片文件访问端口为89 前端代码访问端口为81
   file-directory-name: file # 文件压缩包存在的目录
   chunk-directory-name: chunk # 文件存在的目录
   #在nginx前缀拼接上文件名时才可以访问到该文件
