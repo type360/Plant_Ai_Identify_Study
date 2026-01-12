@@ -21,11 +21,13 @@ import com.briup.pai.service.IFileInfoService;
 import com.briup.pai.service.IUploadService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +51,8 @@ public class UploadServiceImpl implements IUploadService {
     @Autowired
     private EntityServiceImpl entityServiceImpl;
 
+    @CacheEvict(
+            key = "T(com.briup.pai.common.constant.CommonConstant).DETAIL_CACHE_PREFIX + ':' + #datasetId")
     @Override
     public void modifyDatasetStatus(Integer datasetId, Integer status) {
         Dataset dataset = BriupAssert.requireNotNull(datasetService, Dataset::getId, datasetId, ResultCodeEnum.DATA_NOT_EXIST);
@@ -202,6 +206,8 @@ public class UploadServiceImpl implements IUploadService {
     // E:/pai-file-nginx/html/file/d91ccc41c85f9f0852c5604c28725669/Tomato_Optimize_Train.zip
     // E:/pai-file-nginx/html/${datasetId}
 
+    @CacheEvict(
+            key = "T(com.briup.pai.common.constant.CommonConstant).DETAIL_CACHE_PREFIX + ':' + #datasetId")
     @Override
     public void unzipDataset(Integer datasetId, String fileHash) {
         // 校验数据
@@ -248,8 +254,41 @@ public class UploadServiceImpl implements IUploadService {
         entityServiceImpl.saveBatch(list);
     }
 
+    @CacheEvict(
+            key = "T(com.briup.pai.common.constant.CommonConstant).DETAIL_CACHE_PREFIX + ':' + #datasetId")
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void unzipClassify(Integer datasetId, Integer classifyId, String fileHash) {
+        // 校验数据
+        Dataset dataset = BriupAssert.requireNotNull(datasetService, Dataset::getId, datasetId, ResultCodeEnum.DATA_NOT_EXIST);
+        FileInfo fileInfo = BriupAssert.requireNotNull(fileInfoService, FileInfo::getFileHash, fileHash, ResultCodeEnum.DATA_NOT_EXIST);
+        Classify classify = BriupAssert.requireNotNull(classifyServiceImpl, Classify::getId, classifyId, ResultCodeEnum.DATA_NOT_EXIST);
+        // 原路径
+        File sourceFile = new File(fileInfo.getFilePath());
+        // 目标路径
+        File targetFile = new File(nginxFilePath + "/" + datasetId + "/" + classify.getClassifyName());
+        // 解压之前的图片列表 38张
+        List<String> oldEntityNames = Arrays.stream(targetFile.listFiles(file -> file.isFile() && !file.getName().endsWith("DS_Store")))
+                .map(File::getName).toList();
+        // 归档 新增了2张
+        ZipUtil.unzip(sourceFile, targetFile, CharsetUtil.CHARSET_GBK);
 
+        // 存储新增的图片信息
+        List<String> newEntityNames = Arrays.stream(targetFile.listFiles(file -> file.isFile() && !file.getName().endsWith("DS_Store")))
+                .map(File::getName).toList();
+//        newEntityNames.removeAll(oldEntityNames);
+        List<String> list = new ArrayList<>();
+        for (String newEntity : newEntityNames) { // 40
+            if(!oldEntityNames.contains(newEntity)){
+                list.add(newEntity);
+            }
+        }
+        List<Entity> entityList = list.stream().map(fileName -> {
+            Entity entity = new Entity();
+            entity.setClassifyId(classifyId);
+            entity.setEntityUrl(fileName);
+            return entity;
+        }).toList();
+        entityServiceImpl.saveBatch(entityList);
     }
 }
