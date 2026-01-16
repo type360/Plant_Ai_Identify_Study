@@ -1,4 +1,10 @@
 spring:
+  rabbitmq:
+    virtual-host: /
+    host: localhost
+    username: briup
+    password: briup
+    port: 5672
   # 数据源配置
   datasource:
     url: jdbc:mysql://localhost:3306/pai
