@@ -13,8 +13,10 @@ import com.briup.pai.entity.dto.LoginWithPhoneDTO;
 import com.briup.pai.entity.dto.LoginWithUsernameDTO;
 import com.briup.pai.entity.po.User;
 import com.briup.pai.entity.vo.CurrentLoginUserVO;
+import com.briup.pai.service.IAuthService;
 import com.briup.pai.service.ILoginService;
 import com.briup.pai.service.IUserService;
+import jakarta.annotation.Resource;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,13 +49,19 @@ public class LoginServiceImpl implements ILoginService {
 //    private HttpServletRequest request;
     @Autowired
     private UserConvert userConvert;
+    @Resource
+    private IAuthService authService;
     @Override
     public CurrentLoginUserVO getCurrentUser() {
 //       Integer userId = (Integer) request.getAttribute("userId");
 //        UserEchoVO userById = userService.getUserById(userId);
         Integer userId = SecurityUtil.getUserId();
         User user = userService.getById(userId);
-        return userConvert.po2CurrentLoginUserVO(user);
+        CurrentLoginUserVO currentLoginUserVO = userConvert.po2CurrentLoginUserVO(user);
+        // 用户按钮
+        currentLoginUserVO.setButtons(authService.getUserButtonPermissionList(userId));
+        // 用户路由
+        return currentLoginUserVO;
     }
     @Autowired
     private RedisUtil redisUtil;
